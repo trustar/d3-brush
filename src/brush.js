@@ -7,6 +7,14 @@ import constant from "./constant";
 import BrushEvent from "./event";
 import noevent, {nopropagation} from "./noevent";
 
+/**
+ * The official TruSTAR fork of d3-brush 👏
+ *
+ * But WHY?! ლ( `Д’ ლ)
+ *
+ * (☞ﾟ∀ﾟ)☞ Head on down to line 311 for more info
+ */
+
 var MODE_DRAG = {name: "drag"},
     MODE_SPACE = {name: "space"},
     MODE_HANDLE = {name: "handle"},
@@ -287,10 +295,25 @@ function brush(dim) {
     }
   };
 
+  /**
+   * NOTE: The shift functionality to lock the x or y axis is quite nice, but
+   * doesn't lend itself well to our interaction model of having the user hold
+   * shift in order to select. Therefore we've forked d3-brush and removed this
+   * functionality.
+   *
+   * If this was configurable we would be able to use the standard d3 but it
+   * reads directly from event.shiftKey so I'm not sure what we could do short
+   * of modifying the source directly.
+   *
+   * Bostock had a comment on this issue here:
+   * https://github.com/d3/d3-brush/issues/20#issuecomment-253678909
+   */
   function started() {
     if (event.touches) { if (event.changedTouches.length < event.touches.length) return noevent(); }
     else if (touchending) return;
     if (!filter.apply(this, arguments)) return;
+
+    var shifting = false; // See NOTE
 
     var that = this,
         type = event.target.__data__.type,
@@ -307,7 +330,6 @@ function brush(dim) {
         dx,
         dy,
         moving,
-        shifting = signX && signY && event.shiftKey,
         lockX,
         lockY,
         point0 = mouse(that),
