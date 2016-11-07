@@ -495,13 +495,6 @@ function brush(dim) {
 
     function keyupped() {
       switch (event.keyCode) {
-        case 16: { // SHIFT
-          if (shifting) {
-            lockX = lockY = shifting = false;
-            move();
-          }
-          break;
-        }
         case 18: { // ALT
           if (mode === MODE_CENTER) {
             if (signX < 0) e0 = e1; else if (signX > 0) w0 = w1;
@@ -509,6 +502,7 @@ function brush(dim) {
             mode = MODE_HANDLE;
             move();
           }
+          noevent();
           break;
         }
         case 32: { // SPACE
@@ -525,11 +519,11 @@ function brush(dim) {
             overlay.attr("cursor", cursors[type]);
             move();
           }
+          noevent();
           break;
         }
         default: return;
       }
-      noevent();
     }
   }
 
