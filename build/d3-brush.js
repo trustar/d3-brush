@@ -1,4 +1,4 @@
-// https://d3js.org/d3-brush/ Version 1.0.3. Copyright 2016 Mike Bostock.
+// https://d3js.org/d3-brush/ Version 1.0.4. Copyright 2016 Mike Bostock.
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('d3-dispatch'), require('d3-drag'), require('d3-interpolate'), require('d3-selection'), require('d3-transition')) :
   typeof define === 'function' && define.amd ? define(['exports', 'd3-dispatch', 'd3-drag', 'd3-interpolate', 'd3-selection', 'd3-transition'], factory) :
@@ -514,13 +514,6 @@ function brush$1(dim) {
 
     function keyupped() {
       switch (d3Selection.event.keyCode) {
-        case 16: { // SHIFT
-          if (shifting) {
-            lockX = lockY = shifting = false;
-            move();
-          }
-          break;
-        }
         case 18: { // ALT
           if (mode === MODE_CENTER) {
             if (signX < 0) e0 = e1; else if (signX > 0) w0 = w1;
@@ -528,6 +521,7 @@ function brush$1(dim) {
             mode = MODE_HANDLE;
             move();
           }
+          noevent();
           break;
         }
         case 32: { // SPACE
@@ -544,11 +538,11 @@ function brush$1(dim) {
             overlay.attr("cursor", cursors[type]);
             move();
           }
+          noevent();
           break;
         }
         default: return;
       }
-      noevent();
     }
   }
 
