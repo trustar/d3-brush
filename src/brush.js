@@ -336,7 +336,7 @@ function brush(dim) {
         point = point0,
         emit = emitter(that, arguments).beforestart();
 
-    if (type === "overlay") {
+    if (type === "overlay" || !selection) {
       state.selection = selection = [
         [w0 = dim === Y ? W : point0[0], n0 = dim === X ? N : point0[1]],
         [e0 = dim === Y ? E : w0, s0 = dim === X ? S : n0]

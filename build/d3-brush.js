@@ -1,4 +1,4 @@
-// https://d3js.org/d3-brush/ Version 1.0.4. Copyright 2016 Mike Bostock.
+// https://d3js.org/d3-brush/ Version 1.0.5. Copyright 2016 Mike Bostock.
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('d3-dispatch'), require('d3-drag'), require('d3-interpolate'), require('d3-selection'), require('d3-transition')) :
   typeof define === 'function' && define.amd ? define(['exports', 'd3-dispatch', 'd3-drag', 'd3-interpolate', 'd3-selection', 'd3-transition'], factory) :
@@ -355,7 +355,7 @@ function brush$1(dim) {
         point = point0,
         emit = emitter(that, arguments).beforestart();
 
-    if (type === "overlay") {
+    if (type === "overlay" || !selection) {
       state.selection = selection = [
         [w0 = dim === Y ? W : point0[0], n0 = dim === X ? N : point0[1]],
         [e0 = dim === Y ? E : w0, s0 = dim === X ? S : n0]
