@@ -1,4 +1,4 @@
-// https://d3js.org/d3-brush/ Version 1.0.5. Copyright 2016 Mike Bostock.
+// https://d3js.org/d3-brush/ Version 1.0.6. Copyright 2016 Mike Bostock.
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('d3-dispatch'), require('d3-drag'), require('d3-interpolate'), require('d3-selection'), require('d3-transition')) :
   typeof define === 'function' && define.amd ? define(['exports', 'd3-dispatch', 'd3-drag', 'd3-interpolate', 'd3-selection', 'd3-transition'], factory) :
@@ -33,11 +33,6 @@ var noevent = function() {
  *
  * (☞ﾟ∀ﾟ)☞ Head on down to line 311 for more info
  */
-
-var MODE_DRAG = {name: "drag"};
-var MODE_SPACE = {name: "space"};
-var MODE_HANDLE = {name: "handle"};
-var MODE_CENTER = {name: "center"};
 
 var X = {
   name: "x",
@@ -332,13 +327,10 @@ function brush$1(dim) {
     else if (touchending) return;
     if (!filter.apply(this, arguments)) return;
 
-    var shifting = false; // See NOTE
-
     var that = this,
         type = d3Selection.event.target.__data__.type,
-        mode = (d3Selection.event.metaKey ? type = "overlay" : type) === "selection" ? MODE_DRAG : (d3Selection.event.altKey ? MODE_CENTER : MODE_HANDLE),
-        signX = dim === Y ? null : signsX[type],
-        signY = dim === X ? null : signsY[type],
+        signX = dim === Y ? null : signsX[type], // eslint-disable-line no-unused-vars
+        signY = dim === X ? null : signsY[type], // eslint-disable-line no-unused-vars
         state = local(that),
         extent = state.extent,
         selection = state.selection,
@@ -346,11 +338,9 @@ function brush$1(dim) {
         N = extent[0][1], n0, n1,
         E = extent[1][0], e0, e1,
         S = extent[1][1], s0, s1,
-        dx,
-        dy,
+        dx, // eslint-disable-line no-unused-vars
+        dy, // eslint-disable-line no-unused-vars
         moving,
-        lockX,
-        lockY,
         point0 = d3Selection.mouse(that),
         point = point0,
         emit = emitter(that, arguments).beforestart();
@@ -399,10 +389,6 @@ function brush$1(dim) {
 
     function moved() {
       var point1 = d3Selection.mouse(that);
-      if (shifting && !lockX && !lockY) {
-        if (Math.abs(point1[0] - point[0]) > Math.abs(point1[1] - point[1])) lockY = true;
-        else lockX = true;
-      }
       point = point1;
       moving = true;
       noevent();
@@ -414,27 +400,6 @@ function brush$1(dim) {
 
       dx = point[0] - point0[0];
       dy = point[1] - point0[1];
-
-      switch (mode) {
-        case MODE_SPACE:
-        case MODE_DRAG: {
-          if (signX) dx = Math.max(W - w0, Math.min(E - e0, dx)), w1 = w0 + dx, e1 = e0 + dx;
-          if (signY) dy = Math.max(N - n0, Math.min(S - s0, dy)), n1 = n0 + dy, s1 = s0 + dy;
-          break;
-        }
-        case MODE_HANDLE: {
-          if (signX < 0) dx = Math.max(W - w0, Math.min(E - w0, dx)), w1 = w0 + dx, e1 = e0;
-          else if (signX > 0) dx = Math.max(W - e0, Math.min(E - e0, dx)), w1 = w0, e1 = e0 + dx;
-          if (signY < 0) dy = Math.max(N - n0, Math.min(S - n0, dy)), n1 = n0 + dy, s1 = s0;
-          else if (signY > 0) dy = Math.max(N - s0, Math.min(S - s0, dy)), n1 = n0, s1 = s0 + dy;
-          break;
-        }
-        case MODE_CENTER: {
-          if (signX) w1 = Math.max(W, Math.min(E, w0 - dx * signX)), e1 = Math.max(W, Math.min(E, e0 + dx * signX));
-          if (signY) n1 = Math.max(N, Math.min(S, n0 - dy * signY)), s1 = Math.max(N, Math.min(S, s0 + dy * signY));
-          break;
-        }
-      }
 
       if (e1 < w1) {
         signX *= -1;
@@ -451,8 +416,6 @@ function brush$1(dim) {
       }
 
       if (state.selection) selection = state.selection; // May be set by brush.move!
-      if (lockX) w1 = selection[0][0], e1 = selection[1][0];
-      if (lockY) n1 = selection[0][1], s1 = selection[1][1];
 
       if (selection[0][0] !== w1
           || selection[0][1] !== n1
@@ -482,67 +445,20 @@ function brush$1(dim) {
       emit.end();
     }
 
+    // Initially there was logic here to handle holding modifier keys to control
+    // how the box was resized ore moved. No more! It was causing windows on IE
+    // (even in chrome for some reason)
+    //
+    // We also had a noevent() call here. Not sure if that was relevant.
     function keydowned() {
-      switch (d3Selection.event.keyCode) {
-        case 16: { // SHIFT
-          shifting = signX && signY;
-          break;
-        }
-        case 18: { // ALT
-          if (mode === MODE_HANDLE) {
-            if (signX) e0 = e1 - dx * signX, w0 = w1 + dx * signX;
-            if (signY) s0 = s1 - dy * signY, n0 = n1 + dy * signY;
-            mode = MODE_CENTER;
-            move();
-          }
-          break;
-        }
-        case 32: { // SPACE; takes priority over ALT
-          if (mode === MODE_HANDLE || mode === MODE_CENTER) {
-            if (signX < 0) e0 = e1 - dx; else if (signX > 0) w0 = w1 - dx;
-            if (signY < 0) s0 = s1 - dy; else if (signY > 0) n0 = n1 - dy;
-            mode = MODE_SPACE;
-            overlay.attr("cursor", cursors.selection);
-            move();
-          }
-          break;
-        }
-        default: return;
-      }
-      noevent();
+      return;
     }
 
+    // Initially there was logic here to handle holding modifier keys to control
+    // how the box was resized ore moved. No more! It was causing windows on IE
+    // (even in chrome for some reason)
     function keyupped() {
-      switch (d3Selection.event.keyCode) {
-        case 18: { // ALT
-          if (mode === MODE_CENTER) {
-            if (signX < 0) e0 = e1; else if (signX > 0) w0 = w1;
-            if (signY < 0) s0 = s1; else if (signY > 0) n0 = n1;
-            mode = MODE_HANDLE;
-            move();
-          }
-          noevent();
-          break;
-        }
-        case 32: { // SPACE
-          if (mode === MODE_SPACE) {
-            if (d3Selection.event.altKey) {
-              if (signX) e0 = e1 - dx * signX, w0 = w1 + dx * signX;
-              if (signY) s0 = s1 - dy * signY, n0 = n1 + dy * signY;
-              mode = MODE_CENTER;
-            } else {
-              if (signX < 0) e0 = e1; else if (signX > 0) w0 = w1;
-              if (signY < 0) s0 = s1; else if (signY > 0) n0 = n1;
-              mode = MODE_HANDLE;
-            }
-            overlay.attr("cursor", cursors[type]);
-            move();
-          }
-          noevent();
-          break;
-        }
-        default: return;
-      }
+      return;
     }
   }
 
